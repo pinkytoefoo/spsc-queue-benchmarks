@@ -1,6 +1,10 @@
 MIT License
 
+<<<<<<< HEAD
 Copyright (c) 2026 pinkytoefoo
+=======
+Copyright (c) 2018 Erik Rigtorp <erik@rigtorp.se>
+>>>>>>> 4c48b62 (Update to modern CMake layout)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
