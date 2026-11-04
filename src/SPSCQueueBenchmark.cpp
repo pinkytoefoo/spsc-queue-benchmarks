@@ -23,14 +23,11 @@ SOFTWARE.
 #include <chrono>
 #include <iostream>
 #include <rigtorp/SPSCQueue.h>
+#include <hft/spsc_queue.hpp>
 #include <thread>
 
 #if __has_include(<boost/lockfree/spsc_queue.hpp> )
 #include <boost/lockfree/spsc_queue.hpp>
-#endif
-
-#if __has_include(<folly/ProducerConsumerQueue.h>)
-#include <folly/ProducerConsumerQueue.h>
 #endif
 
 void pinThread(int cpu) {
@@ -62,6 +59,67 @@ int main(int argc, char *argv[]) {
 
   const size_t queueSize = 10000000;
   const int64_t iters = 10000000;
+
+  std::cout << "fby::spsc_queue: \n";
+
+  {
+    fby::spsc_queue<int> q(queueSize);
+    auto t = std::thread([&] {
+      pinThread(cpu1);
+      for (int i = 0; i < iters; ++i) {
+        while (!q.front())
+          ;
+        if (*q.front() != i) {
+          throw std::runtime_error("");
+        }
+        q.pop();
+      }
+    });
+
+    pinThread(cpu2);
+
+    auto start = std::chrono::steady_clock::now();
+    for (int i = 0; i < iters; ++i) {
+      q.emplace(i);
+    }
+    t.join();
+    auto stop = std::chrono::steady_clock::now();
+    std::cout << iters * 1000000 /
+                     std::chrono::duration_cast<std::chrono::nanoseconds>(stop -
+                                                                          start)
+                         .count()
+              << " ops/ms" << std::endl;
+  }
+
+  {
+    fby::spsc_queue<int> q1(queueSize), q2(queueSize);
+    auto t = std::thread([&] {
+      pinThread(cpu1);
+      for (int i = 0; i < iters; ++i) {
+        while (!q1.front())
+          ;
+        q2.emplace(*q1.front());
+        q1.pop();
+      }
+    });
+
+    pinThread(cpu2);
+
+    auto start = std::chrono::steady_clock::now();
+    for (int i = 0; i < iters; ++i) {
+      q1.emplace(i);
+      while (!q2.front())
+        ;
+      q2.pop();
+    }
+    auto stop = std::chrono::steady_clock::now();
+    t.join();
+    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(stop -
+                                                                      start)
+                         .count() /
+                     iters
+              << " ns RTT" << std::endl;
+  }
 
   std::cout << "SPSCQueue:" << std::endl;
 
@@ -177,71 +235,6 @@ int main(int argc, char *argv[]) {
         ;
       int val;
       while (q2.pop(&val, 1) != 1)
-        ;
-    }
-    auto stop = std::chrono::steady_clock::now();
-    t.join();
-    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(stop -
-                                                                      start)
-                         .count() /
-                     iters
-              << " ns RTT" << std::endl;
-  }
-#endif
-
-#if __has_include(<folly/ProducerConsumerQueue.h>)
-  std::cout << "folly::ProducerConsumerQueue:" << std::endl;
-
-  {
-    folly::ProducerConsumerQueue<int> q(queueSize);
-    auto t = std::thread([&] {
-      pinThread(cpu1);
-      for (int i = 0; i < iters; ++i) {
-        int val;
-        while (!q.read(val))
-          ;
-        if (val != i) {
-          throw std::runtime_error("");
-        }
-      }
-    });
-
-    pinThread(cpu2);
-
-    auto start = std::chrono::steady_clock::now();
-    for (int i = 0; i < iters; ++i) {
-      while (!q.write(i))
-        ;
-    }
-    t.join();
-    auto stop = std::chrono::steady_clock::now();
-    std::cout << iters * 1000000 /
-                     std::chrono::duration_cast<std::chrono::nanoseconds>(stop -
-                                                                          start)
-                         .count()
-              << " ops/ms" << std::endl;
-  }
-
-  {
-    folly::ProducerConsumerQueue<int> q1(queueSize), q2(queueSize);
-    auto t = std::thread([&] {
-      pinThread(cpu1);
-      for (int i = 0; i < iters; ++i) {
-        int val;
-        while (!q1.read(val))
-          ;
-        q2.write(val);
-      }
-    });
-
-    pinThread(cpu2);
-
-    auto start = std::chrono::steady_clock::now();
-    for (int i = 0; i < iters; ++i) {
-      while (!q1.write(i))
-        ;
-      int val;
-      while (!q2.read(val))
         ;
     }
     auto stop = std::chrono::steady_clock::now();
