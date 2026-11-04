@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
   std::cout << "fby::spsc_queue: \n";
 
   {
-    fby::spsc_queue<int> q(queueSize);
+    hft::spsc_queue<int> q(queueSize);
     auto t = std::thread([&] {
       pinThread(cpu1);
       for (int i = 0; i < iters; ++i) {
@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
   }
 
   {
-    fby::spsc_queue<int> q1(queueSize), q2(queueSize);
+    hft::spsc_queue<int> q1(queueSize), q2(queueSize);
     auto t = std::thread([&] {
       pinThread(cpu1);
       for (int i = 0; i < iters; ++i) {
