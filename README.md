@@ -1,6 +1,6 @@
 # libhft benchmark comparison
 
-[![C/C++ CI](https://github.com/rigtorp/SPSCQueue/workflows/C/C++%20CI/badge.svg)](https://github.com/rigtorp/SPSCQueue/actions)
+[![C/C++ CI](https://github.com/pinkytoefoo/spsc-queue-benchmarks/workflows/C/C++%20CI/badge.svg)](https://github.com/pinkytoefoo/spsc-queue-benchmarks/actions)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/rigtorp/SPSCQueue/master/LICENSE)
 
 This repo is to demonstrate my SPSCQueue's implemetation against Erik Rigtorp's and the boost library.
