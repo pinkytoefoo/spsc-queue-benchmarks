@@ -18,7 +18,7 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     if(MSVC)
         add_compile_options(/permissive- /W4)
     else()
-        add_compile_options(-Wall -Wextra -Wpedantic -Wno-interference-size)
+        add_compile_options(-Wall -Wextra -Wpedantic -Wno-interference-size -Wno-error=unknown-warning-option)
     endif()
 
     find_package(Threads REQUIRED)
