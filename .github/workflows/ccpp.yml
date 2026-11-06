@@ -6,7 +6,7 @@ jobs:
   release-smoke:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Run benchmarks with Optimization
       run: |
         sudo apt-get update
