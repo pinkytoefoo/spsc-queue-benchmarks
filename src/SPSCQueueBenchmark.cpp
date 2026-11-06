@@ -44,22 +44,7 @@ void pinThread(int cpu) {
   }
 }
 
-int main(int argc, char *argv[]) {
-  (void)argc, (void)argv;
-
-  using namespace rigtorp;
-
-  int cpu1 = -1;
-  int cpu2 = -1;
-
-  if (argc == 3) {
-    cpu1 = std::stoi(argv[1]);
-    cpu2 = std::stoi(argv[2]);
-  }
-
-  const size_t queueSize = 10000000;
-  const int64_t iters = 10000000;
-
+void hft_bench(size_t queueSize, uint64_t iters, int cpu1 = -1, int cpu2 = -1) {
   std::cout << "fby::spsc_queue: \n";
 
   {
@@ -121,8 +106,11 @@ int main(int argc, char *argv[]) {
               << " ns RTT" << std::endl;
   }
 
-  std::cout << "SPSCQueue:" << std::endl;
+}
 
+void rigtorp_bench(size_t queueSize, uint64_t iters, int cpu1 = -1, int cpu2 = -1) {
+  std::cout << "SPSCQueue:" << std::endl;
+  using namespace rigtorp;
   {
     SPSCQueue<int> q(queueSize);
     auto t = std::thread([&] {
@@ -182,6 +170,9 @@ int main(int argc, char *argv[]) {
               << " ns RTT" << std::endl;
   }
 
+}
+
+void boost_bench(size_t queueSize, uint64_t iters, int cpu1 = -1, int cpu2 = -1) {
 #if __has_include(<boost/lockfree/spsc_queue.hpp> )
   std::cout << "boost::lockfree::spsc:" << std::endl;
   {
@@ -246,6 +237,41 @@ int main(int argc, char *argv[]) {
               << " ns RTT" << std::endl;
   }
 #endif
+}
 
+int main(int argc, char *argv[]) {
+  (void)argc, (void)argv;
+
+  using namespace rigtorp;
+
+  int cpu1 = -1;
+  int cpu2 = -1;
+
+  if (argc == 3) {
+    cpu1 = std::stoi(argv[1]);
+    cpu2 = std::stoi(argv[2]);
+  }
+
+  const size_t queueSize = 10000000;
+  const int64_t iters = 10000000;
+
+  switch(std::stoi(argv[1])) {
+    case 1:
+      hft_bench(queueSize, iters, cpu1, cpu2);
+      break;
+
+    case 2:
+      rigtorp_bench(queueSize, iters, cpu1, cpu2);
+      break;
+
+    case 3:
+      boost_bench(queueSize, iters, cpu1, cpu2);
+      break;
+      
+    default:
+      hft_bench(queueSize, iters, cpu1, cpu2);
+      rigtorp_bench(queueSize, iters, cpu1, cpu2);
+      boost_bench(queueSize, iters, cpu1, cpu2);
+  }
   return 0;
 }
