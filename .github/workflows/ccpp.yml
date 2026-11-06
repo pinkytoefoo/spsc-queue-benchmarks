@@ -9,10 +9,13 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
-    - name: Build & Test
+    - name: Build & Benchmark
       run: |
+        sudo apt update
+        sudo apt install ninja-build
         cmake -E remove_directory build
-        cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-Wno-interference-size -fsanitize=address,undefined"
+        cmake -G Ninja -B build -S . -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-Wno-interference-size -fsanitize=address,undefined"
         cmake --build build
         cd build
-        ctest --output-on-failure
+        ninja
+        ./SPSCQueueBenchmark
