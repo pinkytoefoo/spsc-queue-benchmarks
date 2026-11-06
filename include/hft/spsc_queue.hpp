@@ -145,10 +145,8 @@ public:
             nextWrite = 0;
         }
 
-        auto currentRead = readIdx_.load(std::memory_order_acquire);
-
-        while(nextWrite == currentRead) {
-            currentRead = readIdx_.load(std::memory_order_acquire);
+        while(nextWrite == readCacheIdx_) {
+            readCacheIdx_ = readIdx_.load(std::memory_order_acquire);
         }
 
         alloc_traits::construct(

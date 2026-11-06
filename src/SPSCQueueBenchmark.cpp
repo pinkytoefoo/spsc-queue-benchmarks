@@ -22,6 +22,7 @@ SOFTWARE.
 
 #include <chrono>
 #include <iostream>
+#include <pthread.h>
 #include <rigtorp/SPSCQueue.h>
 #include <hft/spsc_queue.hpp>
 #include <thread>
@@ -44,14 +45,14 @@ void pinThread(int cpu) {
   }
 }
 
-void hft_bench(size_t queueSize, uint64_t iters, int cpu1 = -1, int cpu2 = -1) {
-  std::cout << "fby::spsc_queue: \n";
+void hft_bench(size_t queueSize, int64_t iters, int cpu1 = -1, int cpu2 = -1) {
+  std::cout << "hft::spsc_queue: \n";
 
   {
     hft::spsc_queue<int> q(queueSize);
     auto t = std::thread([&] {
       pinThread(cpu1);
-      for (int i = 0; i < iters; ++i) {
+      for (int64_t i = 0; i < iters; ++i) {
         while (!q.front())
           ;
         if (*q.front() != i) {
@@ -64,7 +65,7 @@ void hft_bench(size_t queueSize, uint64_t iters, int cpu1 = -1, int cpu2 = -1) {
     pinThread(cpu2);
 
     auto start = std::chrono::steady_clock::now();
-    for (int i = 0; i < iters; ++i) {
+    for (int64_t i = 0; i < iters; ++i) {
       q.emplace(i);
     }
     t.join();
@@ -80,7 +81,7 @@ void hft_bench(size_t queueSize, uint64_t iters, int cpu1 = -1, int cpu2 = -1) {
     hft::spsc_queue<int> q1(queueSize), q2(queueSize);
     auto t = std::thread([&] {
       pinThread(cpu1);
-      for (int i = 0; i < iters; ++i) {
+      for (int64_t i = 0; i < iters; ++i) {
         while (!q1.front())
           ;
         q2.emplace(*q1.front());
@@ -91,7 +92,7 @@ void hft_bench(size_t queueSize, uint64_t iters, int cpu1 = -1, int cpu2 = -1) {
     pinThread(cpu2);
 
     auto start = std::chrono::steady_clock::now();
-    for (int i = 0; i < iters; ++i) {
+    for (int64_t i = 0; i < iters; ++i) {
       q1.emplace(i);
       while (!q2.front())
         ;
@@ -108,14 +109,14 @@ void hft_bench(size_t queueSize, uint64_t iters, int cpu1 = -1, int cpu2 = -1) {
 
 }
 
-void rigtorp_bench(size_t queueSize, uint64_t iters, int cpu1 = -1, int cpu2 = -1) {
+void rigtorp_bench(size_t queueSize, int64_t iters, int cpu1 = -1, int cpu2 = -1) {
   std::cout << "SPSCQueue:" << std::endl;
   using namespace rigtorp;
   {
     SPSCQueue<int> q(queueSize);
     auto t = std::thread([&] {
       pinThread(cpu1);
-      for (int i = 0; i < iters; ++i) {
+      for (int64_t i = 0; i < iters; ++i) {
         while (!q.front())
           ;
         if (*q.front() != i) {
@@ -128,7 +129,7 @@ void rigtorp_bench(size_t queueSize, uint64_t iters, int cpu1 = -1, int cpu2 = -
     pinThread(cpu2);
 
     auto start = std::chrono::steady_clock::now();
-    for (int i = 0; i < iters; ++i) {
+    for (int64_t i = 0; i < iters; ++i) {
       q.emplace(i);
     }
     t.join();
@@ -144,7 +145,7 @@ void rigtorp_bench(size_t queueSize, uint64_t iters, int cpu1 = -1, int cpu2 = -
     SPSCQueue<int> q1(queueSize), q2(queueSize);
     auto t = std::thread([&] {
       pinThread(cpu1);
-      for (int i = 0; i < iters; ++i) {
+      for (int64_t i = 0; i < iters; ++i) {
         while (!q1.front())
           ;
         q2.emplace(*q1.front());
@@ -155,7 +156,7 @@ void rigtorp_bench(size_t queueSize, uint64_t iters, int cpu1 = -1, int cpu2 = -
     pinThread(cpu2);
 
     auto start = std::chrono::steady_clock::now();
-    for (int i = 0; i < iters; ++i) {
+    for (int64_t i = 0; i < iters; ++i) {
       q1.emplace(i);
       while (!q2.front())
         ;
@@ -172,14 +173,14 @@ void rigtorp_bench(size_t queueSize, uint64_t iters, int cpu1 = -1, int cpu2 = -
 
 }
 
-void boost_bench(size_t queueSize, uint64_t iters, int cpu1 = -1, int cpu2 = -1) {
+void boost_bench(size_t queueSize, int64_t iters, int cpu1 = -1, int cpu2 = -1) {
 #if __has_include(<boost/lockfree/spsc_queue.hpp> )
   std::cout << "boost::lockfree::spsc:" << std::endl;
   {
     boost::lockfree::spsc_queue<int> q(queueSize);
     auto t = std::thread([&] {
       pinThread(cpu1);
-      for (int i = 0; i < iters; ++i) {
+      for (int64_t i = 0; i < iters; ++i) {
         int val;
         while (q.pop(&val, 1) != 1)
           ;
@@ -192,7 +193,7 @@ void boost_bench(size_t queueSize, uint64_t iters, int cpu1 = -1, int cpu2 = -1)
     pinThread(cpu2);
 
     auto start = std::chrono::steady_clock::now();
-    for (int i = 0; i < iters; ++i) {
+    for (int64_t i = 0; i < iters; ++i) {
       while (!q.push(i))
         ;
     }
@@ -209,7 +210,7 @@ void boost_bench(size_t queueSize, uint64_t iters, int cpu1 = -1, int cpu2 = -1)
     boost::lockfree::spsc_queue<int> q1(queueSize), q2(queueSize);
     auto t = std::thread([&] {
       pinThread(cpu1);
-      for (int i = 0; i < iters; ++i) {
+      for (int64_t i = 0; i < iters; ++i) {
         int val;
         while (q1.pop(&val, 1) != 1)
           ;
@@ -221,7 +222,7 @@ void boost_bench(size_t queueSize, uint64_t iters, int cpu1 = -1, int cpu2 = -1)
     pinThread(cpu2);
 
     auto start = std::chrono::steady_clock::now();
-    for (int i = 0; i < iters; ++i) {
+    for (int64_t i = 0; i < iters; ++i) {
       while (!q1.push(i))
         ;
       int val;
@@ -255,23 +256,25 @@ int main(int argc, char *argv[]) {
   const size_t queueSize = 10000000;
   const int64_t iters = 10000000;
 
-  switch(std::stoi(argv[1])) {
-    case 1:
-      hft_bench(queueSize, iters, cpu1, cpu2);
-      break;
+  if(argc > 1) {
+    switch(std::stoi(argv[1])) {
+      case 1:
+        hft_bench(queueSize, iters, cpu1, cpu2);
+        break;
 
-    case 2:
-      rigtorp_bench(queueSize, iters, cpu1, cpu2);
-      break;
+      case 2:
+        rigtorp_bench(queueSize, iters, cpu1, cpu2);
+        break;
 
-    case 3:
-      boost_bench(queueSize, iters, cpu1, cpu2);
-      break;
-      
-    default:
-      hft_bench(queueSize, iters, cpu1, cpu2);
-      rigtorp_bench(queueSize, iters, cpu1, cpu2);
-      boost_bench(queueSize, iters, cpu1, cpu2);
+      case 3:
+        boost_bench(queueSize, iters, cpu1, cpu2);
+        break;
+      }
+  } else {
+    // todo: add iterations
+    hft_bench(queueSize, iters, cpu1, cpu2);
+    rigtorp_bench(queueSize, iters, cpu1, cpu2);
+    boost_bench(queueSize, iters, cpu1, cpu2);
   }
   return 0;
 }

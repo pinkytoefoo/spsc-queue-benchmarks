@@ -13,7 +13,7 @@ target_include_directories(${PROJECT_NAME} INTERFACE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-# Tests and examples
+# benchmark
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     if(MSVC)
         add_compile_options(/permissive- /W4)
@@ -25,26 +25,9 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
 
     if (UNIX AND NOT APPLE)
         add_executable(SPSCQueueBenchmark src/SPSCQueueBenchmark.cpp)
-        target_compile_options(SPSCQueueBenchmark -O3 -DNDEBUG)
+        target_compile_options(SPSCQueueBenchmark PRIVATE -O3 -DNDEBUG)
         target_link_libraries(SPSCQueueBenchmark SPSCQueue Threads::Threads)
     endif()
-
-    if (((CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 7.0)
-        OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 9.0))
-        AND UNIX AND NOT APPLE)
-        add_executable(SPSCQueueExampleHugepages src/SPSCQueueExampleHugepages.cpp)
-        target_link_libraries(SPSCQueueExampleHugepages SPSCQueue Threads::Threads)
-        target_compile_features(SPSCQueueExampleHugepages PRIVATE cxx_std_17)
-    endif()
-
-    add_executable(SPSCQueueExample src/SPSCQueueExample.cpp)
-    target_link_libraries(SPSCQueueExample SPSCQueue Threads::Threads)
-
-    add_executable(SPSCQueueTest src/SPSCQueueTest.cpp)
-    target_link_libraries(SPSCQueueTest SPSCQueue Threads::Threads)
-
-    enable_testing()
-    add_test(SPSCQueueTest SPSCQueueTest)
 endif()
 
 # Install
