@@ -40,30 +40,41 @@ Since `readCacheIdx_` is only ever touched by the producer (alongside `writeIdx_
  
 The benchmark code is from Rigtorp's original repo, with an added adaptation for `hft::spsc_queue`. 
 Each queue is created with a producer and consumer thread pinned to a CPU core via Linux CPU affinity APIs,
-to prevent issues with core migration. Each queue was run three times back to back.
+to prevent issues with core migration. Each queue was run 5 times back to back.
  
-| Queue                  | Throughput (ops/ms) | Latency RTT (ns) |
-| ---------------------- | ------------------: | ---------------: |
-| `hft::spsc_queue`      |             300,526 |              157 |
-| `rigtorp::SPSCQueue`   |              81,258 |              157 |
-| `boost::lockfree::spsc`|              89,856 |              183 |
+| Queue                   | Throughput (ops/ms) | Latency RTT (ns) |
+| ----------------------- | ------------------: | ---------------: |
+| `hft::spsc_queue`       |             312,294 |              160 |
+| `rigtorp::SPSCQueue`    |             107,406 |              161 |
+| `boost::lockfree::spsc` |              83,393 |              176 |
  
-*Mean of 3 runs. Throughput is ~3.7x `rigtorp::SPSCQueue` and ~3.3x `boost::lockfree::spsc`. RTT is on par with Rigtorp's and ~14% lower than Boost's.*
+*Mean of 5 runs. Throughput is ~2.9x `rigtorp::SPSCQueue` and ~3.7x `boost::lockfree::spsc`. RTT is on par with Rigtorp's and ~9% lower than Boost's.*
+ 
+| Queue                   | Throughput range (ops/ms) | Median throughput (ops/ms) | RTT range (ns) |
+| ----------------------- | ------------------------: | -------------------------: | -------------: |
+| `hft::spsc_queue`       |         299,313 – 321,295 |                    319,521 |        158–162 |
+| `rigtorp::SPSCQueue`    |          57,501 – 144,808 |                    105,710 |        158–163 |
+| `boost::lockfree::spsc` |           78,059 – 89,451 |                     83,891 |        169–195 |
  
 <details>
   <summary>Raw runs</summary>
-
-| Queue                  | Run | Throughput (ops/ms) | RTT (ns) |
-| ---------------------- | --: | ------------------: | -------: |
-| `hft::spsc_queue`      |   1 |             313,173 |      157 |
-| `hft::spsc_queue`      |   2 |             302,725 |      158 |
-| `hft::spsc_queue`      |   3 |             285,679 |      156 |
-| `rigtorp::SPSCQueue`   |   1 |              84,973 |      158 |
-| `rigtorp::SPSCQueue`   |   2 |              87,149 |      156 |
-| `rigtorp::SPSCQueue`   |   3 |              71,652 |      158 |
-| `boost::lockfree::spsc`|   1 |              90,378 |      165 |
-| `boost::lockfree::spsc`|   2 |              85,592 |      191 |
-| `boost::lockfree::spsc`|   3 |              93,597 |      192 |
+| Queue                   | Run | Throughput (ops/ms) | RTT (ns) |
+| ----------------------- | --: | ------------------: | -------: |
+| `hft::spsc_queue`       |   1 |             301,761 |      160 |
+| `hft::spsc_queue`       |   2 |             319,581 |      159 |
+| `hft::spsc_queue`       |   3 |             299,313 |      161 |
+| `hft::spsc_queue`       |   4 |             319,521 |      158 |
+| `hft::spsc_queue`       |   5 |             321,295 |      162 |
+| `rigtorp::SPSCQueue`    |   1 |             105,710 |      161 |
+| `rigtorp::SPSCQueue`    |   2 |              57,501 |      158 |
+| `rigtorp::SPSCQueue`    |   3 |             123,836 |      162 |
+| `rigtorp::SPSCQueue`    |   4 |             105,176 |      161 |
+| `rigtorp::SPSCQueue`    |   5 |             144,808 |      163 |
+| `boost::lockfree::spsc` |   1 |              84,301 |      195 |
+| `boost::lockfree::spsc` |   2 |              83,891 |      170 |
+| `boost::lockfree::spsc` |   3 |              81,263 |      169 |
+| `boost::lockfree::spsc` |   4 |              78,059 |      172 |
+| `boost::lockfree::spsc` |   5 |              89,451 |      174 |
  
 </details>
 
