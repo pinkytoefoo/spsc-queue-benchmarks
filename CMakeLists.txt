@@ -25,6 +25,7 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
 
     if (UNIX AND NOT APPLE)
         add_executable(SPSCQueueBenchmark src/SPSCQueueBenchmark.cpp)
+        target_compile_options(SPSCQueueBenchmark -O3 -DNDEBUG)
         target_link_libraries(SPSCQueueBenchmark SPSCQueue Threads::Threads)
     endif()
 
