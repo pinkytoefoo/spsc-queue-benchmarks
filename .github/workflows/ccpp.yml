@@ -1,21 +1,17 @@
 name: C/C++ CI
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
-  build-ubuntu:
-
+  release-smoke:
     runs-on: ubuntu-latest
-    
     steps:
-    - uses: actions/checkout@v1
-    - name: Build & Benchmark
+    - uses: actions/checkout@v2
+    - name: Run benchmarks with Optimization
       run: |
-        sudo apt update
-        sudo apt install ninja-build
-        cmake -E remove_directory build
-        cmake -G Ninja -B build -S . -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-Wno-interference-size -fsanitize=address,undefined"
+        sudo apt-get update
+        sudo apt-get install -y ninja-build libboost-dev
+        cmake -G Ninja -B build -S . -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_CXX_FLAGS="-Wno-interference-size"
         cmake --build build
-        cd build
-        ninja
-        ./SPSCQueueBenchmark
+        ./build/SPSCQueueBenchmark
