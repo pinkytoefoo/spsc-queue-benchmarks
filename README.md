@@ -82,7 +82,7 @@ to prevent issues with core migration. Each queue was run 5 times back to back.
  
 - **Hardware:** The benchmarks were ran on a AMD Ryzen 5 Pro 7535U CPU.
 - **Throughput and RTT:** The throughput gain comes from the producer/consumer hotpath touching fewer cache lines. RTT and latency is dominated remains relatively the same. Although, it is worth noting that Rigtorp's implementation adds additional padding to the underlying buffer to prevent possible false sharing if the buffer data ends up being on the same cache line as some frequently modified variable.
-- **Testing variance:** Currently, there was only 3 total trials. The results will differ on different machines and more test iterations should be ran to make these results concrete.
+- **Testing variance:** There was only 5 total trials. The results will differ on different machines and more test iterations should be ran to make these results concrete. 
 
 ## Building and running
  
