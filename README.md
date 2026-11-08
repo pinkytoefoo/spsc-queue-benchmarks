@@ -10,8 +10,10 @@ A bounded, lock-free single-producer / single-consumer (SPSC) queue in C++ from 
 
 ## The optimization
  
-Like Rigtorp's queue, each side keeps a *cached copy* of the other side's index, so the hot path usually avoids touching the other thread's cache line at all.
- 
+Like Rigtorp's queue, each side keeps a *cached copy* of the other side's index.
+This way, we can minimize the atomic acquire load operations (in our `push` / `pop` methods),
+and simply lazily load the opposite index when absolutely necessary.
+
 Each cached index is only ever accessed by the thread with the real opposite index. So instead of giving the cached indexes their own cache line, I aggregated the index pairs:
  
 **hft::spsc_queue** (this repo)
@@ -28,13 +30,13 @@ size_type writeCacheIdx_{ 0 };  // same cache line as readIdx_
  
 ```cpp
 alignas(kCachelineSize) std::atomic<size_type> writeIdx_{ 0 };
-alignas(kCachelineSize) size_type readCacheIdx_{ 0 };   // seperate cache line
+alignas(kCachelineSize) size_type readCacheIdx_{ 0 };   // separate cache line
  
 alignas(kCachelineSize) std::atomic<size_type> readIdx_{ 0 };
-alignas(kCachelineSize) size_type writeCacheIdx_{ 0 };  // seperate cache line
+alignas(kCachelineSize) size_type writeCacheIdx_{ 0 };  // separate cache line
 ```
  
-Since `readCacheIdx_` is only ever touched by the producer (alongside `writeIdx_`), and `writeCachedIdx_` is only ever touched by the consumer (alongside `readIdx_`), we can keep them on the same cache lines because it introduces no extra false sharing. By keeping our current and cached indexes on the same cache line, we can keep reduce the pressure on our cores by simply having 1 cache line being shot up into the core.
+Since `readCacheIdx_` is only ever touched by the producer (alongside `writeIdx_`), and `writeCachedIdx_` is only ever touched by the consumer (alongside `readIdx_`), we can keep them on the same cache lines because it introduces no extra false sharing. By keeping our current and cached indexes on the same cache line, we can reduce the pressure on our cores by simply having 1 cache line being shot up into the core.
 
 ## Benchmarks
  
@@ -80,9 +82,9 @@ to prevent issues with core migration. Each queue was run 5 times back to back.
 
 ### Notes
  
-- **Hardware:** The benchmarks were ran on a AMD Ryzen 5 Pro 7535U CPU.
-- **Throughput and RTT:** The throughput gain comes from the producer/consumer hotpath touching fewer cache lines. RTT and latency is dominated remains relatively the same. Although, it is worth noting that Rigtorp's implementation adds additional padding to the underlying buffer to prevent possible false sharing if the buffer data ends up being on the same cache line as some frequently modified variable.
-- **Testing variance:** There was only 5 total trials. The results will differ on different machines and more test iterations should be ran to make these results concrete. 
+- **Hardware:** The benchmarks were ran on an AMD Ryzen 5 Pro 7535U CPU.
+- **Throughput and RTT:** The throughput gain comes from the producer/consumer hotpath touching fewer cache lines. RTT remains relatively the same. Although, it is worth noting that Rigtorp's implementation adds additional padding to the underlying buffer to prevent possible false sharing if the buffer data ends up being on the same cache line as some frequently modified variable.
+- **Testing variance:** Most importantly, the benchmark harness comes from Rigtorp's initial SPSCQueue repo and does not reflect real-world usage. One possible reason for the drastic gap in throughput between my implementation and others is due to hardware prefetching. Due to the simplicity of the benchmarking code (i.e., a basic incrementing for loop), there is a solid chance that the hardware is already prefetching some of the data needed for subsequent iterations. Also, there was only five total trials. The results will differ on different machines and more test iterations should be ran before making concrete conclusions.
 
 ## Building and running
  
